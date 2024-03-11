@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Habit Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .habit-checkbox {
+            margin: 10px;
+        }
+
+        .container {
+            margin-top: 20px;
+        }
+
+        input[type="text"], input[type="password"], input[type="submit"], button {
+            padding: 8px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Daily Habit Tracker</h1>
+
+    <div id="loginContainer" class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <br>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <br>
+            <input type="submit" value="Login">
+            <button type="button" onclick="forgotPassword()">Forgot Password</button>
+        </form>
+        <button type="button" onclick="toggleRegistrationForm()">Register</button>
+    </div>
+
+    <div id="registrationContainer" class="container" style="display: none;">
+        <h2>Register</h2>
+        <form id="registrationForm">
+            <label for="newUsername">New Username:</label>
+            <input type="text" id="newUsername" name="newUsername" required>
+            <br>
+            <label for="newPassword">New Password:</label>
+            <input type="password" id="newPassword" name="newPassword" required>
+            <br>
+            <input type="submit" value="Register">
+            <button type="button" onclick="toggleRegistrationForm()">Cancel</button>
+        </form>
+    </div>
+
+    <div id="habitFormContainer" class="container" style="display: none;">
+        <form id="habitForm">
+            <div id="goalsContainer">
+                <h2>Goals</h2>
+                <!-- Goals will be dynamically added here -->
+            </div>
+
+            <button type="button" onclick="addGoal()">Add Goal</button>
+
+            <div id="habitsContainer">
+                <h2>Habits</h2>
+                <!-- Habits will be dynamically added here -->
+            </div>
+
+            <button type="button" onclick="addHabit()">Add Habit</button>
+
+            <div id="routinesContainer">
+                <h2>Routines</h2>
+                <!-- Routines will be dynamically added here -->
+            </div>
+
+            <button type="button" onclick="addRoutine()">Add Routine</button>
+
+            <br>
+            <input type="submit" value="Submit">
+            <button type="button" onclick="logout()">Logout</button>
+        </form>
+    </div>
+
+    <script>
+        function toggleRegistrationForm() {
+            // Toggle visibility of login and registration forms
+            var loginContainer = document.getElementById('loginContainer');
+            var registrationContainer = document.getElementById('registrationContainer');
+            var newUsernameInput = document.getElementById('newUsername');
+            var newPasswordInput = document.getElementById('newPassword');
+
+            loginContainer.style.display = loginContainer.style.display === 'none' ? 'block' : 'none';
+            registrationContainer.style.display = registrationContainer.style.display === 'none' ? 'block' : 'none';
+
+            // Clear registration form inputs
+            newUsernameInput.value = '';
+            newPasswordInput.value = '';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var username = document.getElementById('username').value;
+            var password = document.getElementById('password').value;
+
+            // Check if the user exists
+            var userExists = localStorage.getItem(username) !== null;
+
+            if (userExists && verifyPassword(username, password)) {
+                // If the user exists and the password is correct, load their data
+                loadUserData(username);
+            } else {
+                alert('Invalid username or password. Please try again.');
+            }
+        });
+
+        document.getElementById('registrationForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var newUsername = document.getElementById('newUsername').value;
+            var newPassword = document.getElementById('newPassword').value;
+
+            // Check if the new username already exists
+            var newUserExists = localStorage.getItem(newUsername) !== null;
+
+            if (!newUserExists) {
+                // If the new username doesn't exist, create a new user
+                createUser(newUsername, newPassword);
+
+                // Switch to login form after registration
+                toggleRegistrationForm();
+            } else {
+                alert('Username already exists. Please choose a different username.');
+            }
+        });
+
+        function createUser(username, password) {
+            localStorage.setItem(username, JSON.stringify({ password: password, goals: [], habits: [], routines: [] }));
+        }
+
+        function verifyPassword(username, password) {
+            // Verify if the entered password matches the stored password for the user
+            var userData = JSON.parse(localStorage.getItem(username));
+            return userData.password === password;
+        }
+
+        function loadUserData(username) {
+            // Hide the login and registration containers
+            document.getElementById('loginContainer').style.display = 'none';
+            document.getElementById('registrationContainer').style.display = 'none';
+
+            // Show the habit form container
+            document.getElementById('habitFormContainer').style.display = 'block';
+
+            // Load the user's goals, habits, and routines
+            loadSection('goals', username);
+            loadSection('habits', username);
+            loadSection('routines', username);
+        }
+
+        function loadSection(section, username) {
+            var container = document.getElementById(section + 'Container');
+            var userData = JSON.parse(localStorage.getItem(username));
+
+            // Clear the container
+            container.innerHTML = '';
+
+            // Display the section title
+            var sectionTitle = document.createElement('h2');
+            sectionTitle.textContent = section.charAt(0).toUpperCase() + section.slice(1);
+            container.appendChild(sectionTitle);
+
+            // Display existing items
+            userData[section].forEach(function(item) {
+                var itemElement = document.createElement('div');
+                itemElement.textContent = item;
+                container.appendChild(itemElement);
+            });
+        }
+
+        function addGoal() {
+            var goalInput = prompt('Enter Goal:');
+            if (goalInput) {
+                addItem('goals', goalInput);
+            }
+        }
+
+        function addHabit() {
+            var habitInput = prompt('Enter Habit:');
+            if (habitInput) {
+                addItem('habits', habitInput);
+            }
+        }
+
+        function addRoutine() {
+            var routineInput = prompt('Enter Routine:');
+            if (routineInput) {
+                addItem('routines', routineInput);
+            }
+        }
+
+        function addItem(section, item) {
+            var username = document.getElementById('username').value;
+            var userData = JSON.parse(localStorage.getItem(username));
+
+            // Add the item to the user's data
+            userData[section].push(item);
+
+            // Save the updated data to local storage
+            localStorage.setItem(username, JSON.stringify(userData));
+
+            // Load the updated section
+            loadSection(section, username);
+        }
+
+        function forgotPassword() {
+            var username = prompt('Enter your username:');
+            var userExists = localStorage.getItem(username) !== null;
+
+            if (userExists) {
+                var newPassword = prompt('Enter your new password:');
+                var userData = JSON.parse(localStorage.getItem(username));
+                userData.password = newPassword;
+                localStorage.setItem(username, JSON.stringify(userData));
+                alert('Password reset successfully. You can now log in with your new password.');
+            } else {
+                alert('Username not found. Please enter a valid username.');
+            }
+        }
+
+        function logout() {
+            // Show the login and registration containers
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('registrationContainer').style.display = 'none';
+
+            // Hide the habit form container
+            document.getElementById('habitFormContainer').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
